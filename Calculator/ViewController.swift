@@ -42,7 +42,7 @@ class ViewController: UIViewController {
         }
     }
     
-    
+    //计算两个数
     func performOperation(operation:(Double, Double) -> Double){
         if(operandStack.count >= 2){
             displayValue = operation(operandStack.removeLast(), operandStack.removeLast())
@@ -50,6 +50,7 @@ class ViewController: UIViewController {
         }
     }
     
+    //计算单个数
     func performOperation(operation:(Double) -> Double){
         if(operandStack.count >= 1){
             displayValue = operation(operandStack.removeLast())
