@@ -10,23 +10,47 @@ import Foundation
 
 class CalculatorBrain
 {
-    private enum Op{               //枚举内可以包含数据
+    private enum Op: Printable {               //枚举内可以包含数据
         case Operand(Double)
         case UnaryOperation(String, Double -> Double)
         case BinaryOperation(String, (Double, Double) -> Double)
-    }    
+    
+        var description: String {
+            get {
+                switch self {
+                case .Operand(let operand):
+                    return "\(operand)"
+                case .UnaryOperation(let symbol, _):
+                    return symbol
+                case .BinaryOperation(let symbol, _):
+                    return symbol
+                }
+            }
+        }
+    }
+    
+    
     private var opStack = [Op]()  //数组(包含数字和计算)
     private var knownOps = [String:Op]()  //字典（已知的运算符）
     
     
     //构造函数
     init(){
+        func learnOp(op: Op) {
+            knownOps[op.description] = op
+        }
+        
         //"×", "÷", "+", "−", "√"
-        knownOps["×"] = Op.BinaryOperation("×", *)
-        knownOps["÷"] = Op.BinaryOperation("÷") { $1 / $0 }
-        knownOps["+"] = Op.BinaryOperation("+", +)
-        knownOps["−"] = Op.BinaryOperation("−") { $1 - $0 }
-        knownOps["√"] = Op.UnaryOperation("√", sqrt)
+        learnOp(Op.BinaryOperation("×", *))
+        learnOp(Op.BinaryOperation("÷") { $1 / $0 })
+        learnOp(Op.BinaryOperation("+", +))
+        learnOp(Op.UnaryOperation("√", sqrt))
+        
+        //knownOps["×"] = Op.BinaryOperation("×", *)
+        //knownOps["÷"] = Op.BinaryOperation("÷") { $1 / $0 }
+        //knownOps["+"] = Op.BinaryOperation("+", +)
+        //knownOps["−"] = Op.BinaryOperation("−") { $1 - $0 }
+        //knownOps["√"] = Op.UnaryOperation("√", sqrt)
     }
     
     //递归计算栈，返回顶层计算的结果和余下的栈
@@ -46,7 +70,7 @@ class CalculatorBrain
             case .BinaryOperation(_, let operation):                                        //双运算符
                 let op1Evaluation = evaluate(remainingOps)                                      //递归计算第一个值
                 if let operand1 = op1Evaluation.result {                                        //
-                    let op2Evaluation = evaluate(remainingOps)                                  //递归计算第二个值
+                    let op2Evaluation = evaluate(op1Evaluation.remainingOps)                                  //递归计算第二个值
                     if let operand2 = op2Evaluation.result{                                     //
                         return (operation(operand1, operand2), op2Evaluation.remainingOps)      //返回计算到的值，以及余下未计算的栈
                     }
@@ -59,18 +83,21 @@ class CalculatorBrain
     //通过运算符和值进行计算
     func evaluate() -> Double? {
         let (result, remainder) = evaluate(opStack)
+        println("\(opStack.description) = \(result) with \(remainder) left over")
         return result
     }
     
-    //将值压入栈
-    func pushOperand(operand: Double){
+    //将值压入栈，并进行计算
+    func pushOperand(operand: Double) -> Double?{
         opStack.append(Op.Operand(operand))
+        return evaluate()
     }
     
-    //将运算符压入栈
-    func performOperation(symbol: String){
+    //将运算符压入栈，并进行计算
+    func performOperation(symbol: String) -> Double?{
         if let operation = knownOps[symbol]{
             opStack.append(operation)
         }
+        return evaluate()
     }
 }
